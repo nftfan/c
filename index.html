@@ -4,52 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Claim Your Tokens</title>
-    <script src="https://cdn.jsdelivr.net/npm/web3modal@1.9.0/dist/web3modal.min.js"></script>
-    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.6/dist/umd/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/coinbase-wallet-sdk@1.1.7/dist/umd/index.min.js"></script>
 </head>
 <body>
     <h1>Claim Your Tokens</h1>
     <button id="connectWallet">Connect Wallet</button>
     <button id="claimTokens" disabled>Claim Tokens</button>
 
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <script type="text/javascript">
         let provider;
         let signer;
         let contract;
-        let web3Modal;
 
         const contractAddress = "0x9BCAedd3C658dD1fAf9A73f7dB965EF74A006608"; // Your contract address
         const contractABI = [
             // ABI for the claimTokens function
             "function claimTokens() external"
         ];
-
-        async function init() {
-            // Configure Web3Modal
-            web3Modal = new Web3Modal({
-                cacheProvider: false, // optional
-                providerOptions: {
-                    metamask: {
-                        package: true // MetaMask provider
-                    },
-                    walletconnect: {
-                        package: WalletConnectProvider, // WalletConnect provider
-                        options: {
-                            infuraId: "5054b2eac8c449d2b13fef0791dde37f" // Infura ID
-                        }
-                    },
-                    coinbasewallet: {
-                        package: CoinbaseWalletSDK, // Coinbase Wallet SDK provider
-                        options: {
-                            appName: "NFTFANS", // App name
-                            infuraId: "5054b2eac8c449d2b13fef0791dde37f" // Infura ID
-                        }
-                    }
-                }
-            });
-        }
 
         document.getElementById("connectWallet").onclick = async () => {
             await connectWallet();
@@ -60,34 +31,33 @@
         };
 
         async function connectWallet() {
-            try {
-                const instance = await web3Modal.connect();
-                provider = new ethers.providers.Web3Provider(instance);
-                signer = provider.getSigner();
-                contract = new ethers.Contract(contractAddress, contractABI, signer);
+            if (typeof window.ethereum !== "undefined") {
+                try {
+                    await ethereum.request({ method: "eth_requestAccounts" });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-                document.getElementById("claimTokens").disabled = false;
-                alert("Wallet connected");
-            } catch (error) {
-                console.error("Error connecting wallet:", error.message);
-                alert("Error connecting wallet. Check the console for details.");
+                    document.getElementById("claimTokens").disabled = false;
+                    alert("Wallet connected");
+                } catch (error) {
+                    console.error("User rejected the request or there was an error", error);
+                }
+            } else {
+                alert("MetaMask is not installed!");
             }
         }
 
         async function claimTokens() {
             try {
                 const tx = await contract.claimTokens();
-                // Show a loading message or spinner here if desired
                 await tx.wait();
                 alert("Tokens claimed successfully!");
             } catch (error) {
-                console.error("Error claiming tokens:", error.message);
-                alert("Failed to claim tokens. Check the console for details.");
+                console.error("Error claiming tokens", error);
+                alert("Failed to claim tokens. See console for details.");
             }
         }
-
-        // Initialize Web3Modal when the script loads
-        init();
     </script>
 </body>
 </html>
