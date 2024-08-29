@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Your Tokens</title>
+</head>
+<body>
+    <h1>Claim Your Tokens</h1>
+    <button id="connectWallet">Connect Wallet</button>
+    <button id="claimTokens" disabled>Claim Tokens</button>
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+    <script type="text/javascript">
+        let provider;
+        let signer;
+        let contract;
+
+        const contractAddress = "0x9BCAedd3C658dD1fAf9A73f7dB965EF74A006608"; // Your contract address
+        const contractABI = [
+            // ABI for the claimTokens function
+            "function claimTokens() external"
+        ];
+
+        document.getElementById("connectWallet").onclick = async () => {
+            await connectWallet();
+        };
+
+        document.getElementById("claimTokens").onclick = async () => {
+            await claimTokens();
+        };
+
+        async function connectWallet() {
+            if (typeof window.ethereum !== "undefined") {
+                try {
+                    await ethereum.request({ method: "eth_requestAccounts" });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+                    document.getElementById("claimTokens").disabled = false;
+                    alert("Wallet connected");
+                } catch (error) {
+                    console.error("User rejected the request or there was an error", error);
+                }
+            } else {
+                alert("MetaMask is not installed!");
+            }
+        }
+
+        async function claimTokens() {
+            try {
+                const tx = await contract.claimTokens();
+                await tx.wait();
+                alert("Tokens claimed successfully!");
+            } catch (error) {
+                console.error("Error claiming tokens", error);
+                alert("Failed to claim tokens. See console for details.");
+            }
+        }
+    </script>
+</body>
+</html>
